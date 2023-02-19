@@ -13,8 +13,9 @@ A simple Python project for comparing the output of keras_ocr, doctr_ocr, easyoc
 
 
 ## Usage
-To run the project, navigate to the project directory and run the following command:
+To run the project, navigate to the project directory: ```cd ocr_model_quantifier```
 
+Then run the script:
 ```python main.py```
 
 
