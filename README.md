@@ -23,7 +23,7 @@ To run the project, navigate to the project directory and run the following comm
 
 * The script will compare the Keras_ocr, Doctr_ocr, Easyocr and Tesseract_ocr text predictions for each image in the "images" folder using Matplotlib. 
 * The names of the images do not matter as long as they are in the "images" folder.
-* It will also track the individual runtime of each model per image in a file named "individual_runtime.csv". It will also store the average runtime of each model in a file named "average_runtime.txt".
+* It will also track the individual runtime of each model per image in a file named "individual_runtime.csv". The average runtime of each model is written to a file named "average_runtime.txt".
 
 ## Example Image Comparisons
 
