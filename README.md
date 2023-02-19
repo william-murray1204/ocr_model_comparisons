@@ -13,7 +13,7 @@ A simple Python project for comparing the output of keras_ocr, doctr_ocr, easyoc
 
 
 ## Usage
-To run the project, navigate to the project directory: ```cd ocr_model_quantifier```
+To run the project, navigate to the project directory: ```cd ocr_model_comparisons```
 
 Then run the script:
 ```python main.py```
@@ -25,12 +25,12 @@ Then run the script:
 
 ## Example Image Comparisons
 
-![alt text](https://github.com/william-murray1204/ocr_model_quantifier/blob/main/github_example_images/example_1.PNG)
+![alt text](https://github.com/william-murray1204/ocr_model_comparisons/blob/main/github_example_images/example_1.PNG)
 
-![alt text](https://github.com/william-murray1204/ocr_model_quantifier/blob/main/github_example_images/example_2.PNG)
+![alt text](https://github.com/william-murray1204/ocr_model_comparisons/blob/main/github_example_images/example_2.PNG)
 
-![alt text](https://github.com/william-murray1204/ocr_model_quantifier/blob/main/github_example_images/example_3.PNG)
+![alt text](https://github.com/william-murray1204/ocr_model_comparisons/blob/main/github_example_images/example_3.PNG)
 
-![alt text](https://github.com/william-murray1204/ocr_model_quantifier/blob/main/github_example_images/example_4.PNG)
+![alt text](https://github.com/william-murray1204/ocr_model_comparisons/blob/main/github_example_images/example_4.PNG)
 
-![alt text](https://github.com/william-murray1204/ocr_model_quantifier/blob/main/github_example_images/example_5.PNG)
+![alt text](https://github.com/william-murray1204/ocr_model_comparisons/blob/main/github_example_images/example_5.PNG)
