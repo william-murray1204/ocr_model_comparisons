@@ -1,10 +1,10 @@
-# ocr_model_quantifier
+# ocr_model_comparisons
 A simple Python project for comparing the output of keras_ocr, doctr_ocr, easyocr and tesseract_ocr.
 * platform: win-64
 
 ## Installation
 1. Clone the repo: 
-    ```git clone https://github.com/william-murray1204/ocr_model_quantifier.git```
+    ```git clone https://github.com/william-murray1204/ocr_model_comparisons.git```
 2. Create an environment using:
     ```conda create --name <env> --file requirements.txt```
 
