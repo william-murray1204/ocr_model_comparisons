@@ -4,14 +4,24 @@ from matplotlib import pyplot as plt
 from glob import glob
 import pandas as pd
 import numpy as np
+import time
+import os
 
-
-image_count = 5
 
 img_fns = glob('images/*')
+image_count = len(img_fns)
+# image_count = 1
+individual_runtime_output_file = 'individual_runtime.csv'
+average_runtime_output_file = "average_runtime.txt"
 
 
-# Convert relative bbox coordinates to pixel coordinates
+# Check if the individual runtime output file exists and create it if it doesn't
+if not os.path.exists(individual_runtime_output_file):
+    with open(individual_runtime_output_file, 'w') as f:
+        f.write("image_name,model,runtime\n")
+
+
+# From the two diagonal coordinates given, convert into 4 (a box)
 def flesh_out_coordinates(coord_list):
     top_right = [[coord_list[1][0], coord_list[0][1]]]
     bottom_left = [[coord_list[0][0], coord_list[1][1]]]
@@ -20,17 +30,30 @@ def flesh_out_coordinates(coord_list):
 
 # tesseract_ocr
 dfs = []
+tesseract_runtime_sum = 0
+tesseract_test_count = 0
 for img in img_fns[:image_count]:
-    image = cv2.imread(img)
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-
     config = "--psm 6"
     img_id = img.split('\\')[-1].split('.')[0] 
     img_df = pd.DataFrame(columns=['text', 'bbox', 'img_id'])
-    
-    results = pytesseract.image_to_data(gray, output_type=pytesseract.Output.DICT, config=config)
 
+
+    # Start tracking runtime and run the model
+    start_time = time.time()
+    image = cv2.imread(img)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+    results = pytesseract.image_to_data(gray, output_type=pytesseract.Output.DICT, config=config)
+    end_time = time.time()
+    runtime = end_time - start_time
+    tesseract_runtime_sum += runtime
+
+    # Create a csv row for runtime
+    data = str(f'"{os.path.basename(img)}", "tesseract_ocr", {runtime}\n')
+    # Save the csv row to the file
+    with open(individual_runtime_output_file, 'a') as f:
+        f.write(data)
+    
     for i in range(len(results["text"])):
         word = results["text"][i].strip()
         if word:
@@ -49,21 +72,39 @@ for img in img_fns[:image_count]:
                 ], ignore_index=True)
 
     dfs.append(img_df)
+    tesseract_test_count += 1
+
 tesseract_df = pd.concat(dfs) 
 
 
 
 # easyocr
 import easyocr
-reader = easyocr.Reader(['en'], gpu = False)
+reader = easyocr.Reader(['en'], gpu = True)
 
 dfs = []
+easyocr_runtime_sum = 0
+easyocr_test_count = 0
 for img in img_fns[:image_count]:
-    result = reader.readtext(img)
     img_id = img.split('\\')[-1].split('.')[0]
+
+    # Start tracking runtime and run the model
+    start_time = time.time()
+    result = reader.readtext(img)
+    end_time = time.time()
+    runtime = end_time - start_time
+    easyocr_runtime_sum += runtime
+
+    # Create a csv row for runtime
+    data = str(f'"{os.path.basename(img)}", "easyocr", {runtime}\n')
+    # Save the csv row to the file
+    with open(individual_runtime_output_file, 'a') as f:
+        f.write(data)
+    
     img_df = pd.DataFrame(result, columns=['bbox','text','conf'])
     img_df['img_id'] = img_id
     dfs.append(img_df)
+    easyocr_test_count += 1
 easyocr_df = pd.concat(dfs)
 
 
@@ -72,14 +113,31 @@ import keras_ocr
 pipeline = keras_ocr.pipeline.Pipeline()
 
 dfs = []
+keras_runtime_sum = 0
+keras_test_count = 0
 for img in img_fns[:image_count]:
+
+    # Start tracking runtime and run the model
+    start_time = time.time()
     results = pipeline.recognize([img])
+    end_time = time.time()
+    runtime = end_time - start_time
+    keras_runtime_sum += runtime
+    
+    # Create a csv row for runtime
+    data = str(f'"{os.path.basename(img)}", "keras_ocr", {runtime}\n')
+    # Save the csv row to the file
+    with open(individual_runtime_output_file, 'a') as f:
+        f.write(data)
+
     result = results[0]
     img_id = img.split('\\')[-1].split('.')[0]
     img_df = pd.DataFrame(result, columns=['text', 'bbox'])
     img_df['img_id'] = img_id
     dfs.append(img_df)
+    keras_test_count += 1
 kerasocr_df = pd.concat(dfs)
+
 
 # doctr_ocr
 from doctr.models import ocr_predictor
@@ -102,9 +160,24 @@ def convert_coordinates(coord_list, img_width, img_height):
     return modified_list
 
 dfs = []
+doctr_runtime_sum = 0
+doctr_test_count = 0
 for img in img_fns[:image_count]:
+
+    # Start tracking runtime and run the model
+    start_time = time.time()
     results_array = DocumentFile.from_images(img)
     results = model(results_array)
+    end_time = time.time()
+    runtime = end_time - start_time
+    doctr_runtime_sum += runtime
+
+    # Create a csv row for runtime
+    data = str(f'"{os.path.basename(img)}", "doctr_ocr", {runtime}\n')
+    # Save the csv row to the file
+    with open(individual_runtime_output_file, 'a') as f:
+        f.write(data)
+
     result_json = results.export()
     img_df = pd.DataFrame(columns=['text', 'bbox', 'img_id'])
     img_id = img.split('\\')[-1].split('.')[0] 
@@ -124,6 +197,7 @@ for img in img_fns[:image_count]:
                     })
                 ], ignore_index=True)
     dfs.append(img_df)
+    doctr_test_count += 1
 doctrocr_df = pd.concat(dfs)
 
 
@@ -200,10 +274,35 @@ def plot_compare(img_fn, easyocr_df, kerasocr_df, doctrocr_df, tesseract_df):
 
     axs[1,1].axis('off')
 
+    # Add padding using tight_layout
+    plt.tight_layout()
+
     plt.show()
+
+
+# Average the runtime for the ocr tests
+doctr_ocr_runtime_average = doctr_runtime_sum / doctr_test_count
+keras_ocr_runtime_average = keras_runtime_sum / keras_test_count
+easyocr_ocr_runtime_average = easyocr_runtime_sum / easyocr_test_count
+tesseract_ocr_runtime_average = tesseract_runtime_sum / tesseract_test_count
+
+if image_count < 2:
+    append = ''
+else:
+    append = 's'
+
+accuracy_output = f"Running models against {image_count} image{append} found that:\nAverage Doctr_OCR runtime: {doctr_ocr_runtime_average} seconds\nAverage Easyocr_OCR runtime: {easyocr_ocr_runtime_average} seconds\nAverage keras_OCR runtime: {keras_ocr_runtime_average} seconds\nAverage Tesseract_OCR runtime: {tesseract_ocr_runtime_average} seconds"
+
+# Check if the output file exists and create it if it doesn't
+if not os.path.exists(average_runtime_output_file):
+    with open(average_runtime_output_file, 'w') as f:
+        f.write(accuracy_output)
+else: 
+    with open(average_runtime_output_file, 'a') as f:
+        f.write("\n-----------------------------------------------------------------------------\n")
+        f.write(accuracy_output)
 
 # Loop over results
 for img_fn in img_fns[:image_count]:
     plot_compare(img_fn, easyocr_df, kerasocr_df, doctrocr_df, tesseract_df)
-
 
