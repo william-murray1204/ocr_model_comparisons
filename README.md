@@ -27,3 +27,4 @@ To run the project, navigate to the project directory and run the following comm
 
 ## Example Image Comparisons
 
+https://github.com/william-murray1204/ocr_model_quantifier/blob/main/github_example_images/example_1.PNG
