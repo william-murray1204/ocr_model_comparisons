@@ -3,13 +3,16 @@ A simple Python project for comparing the output of keras_ocr, doctr_ocr, easyoc
 
 
 ## Installation
-Create an environment using:
-```conda create --name <env> --file requirements.txt```
-* platform: win-64
+1. Create an environment using:
+    ```conda create --name <env> --file requirements.txt```
+    * platform: win-64
 
-Or install the dependencies directly by running the following command:
+    Or install the dependencies directly by running the following command:
 
-```pip install -r requirements.txt```
+    ```pip install -r requirements.txt```
+
+2. Install Tesseract from this link https://github.com/UB-Mannheim/tesseract/wiki
+3. Add the Tesseract installation directory to your path in environment variables 
 
 
 ## Usage
@@ -22,5 +25,5 @@ To run the project, navigate to the project directory and run the following comm
 * The names of the images do not matter as long as they are in the images folder.
 * It will also track the individual runtime of each model per image in a file named individual_runtime.csv. It will also store the average runtime of each model in a file named average_runtime.txt.
 
-## Images
+## Example Image Comparisons
 
