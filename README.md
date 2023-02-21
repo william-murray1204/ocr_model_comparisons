@@ -1,5 +1,5 @@
 # ocr_model_quantifier
-A simple Python project for comparing the output of keras_ocr, doctr_ocr, easyocr and tesseract_ocr.
+A simple Python project for comparing the output of Keras OCR, Doctr OCR, Easyocr, Tesseract OCR and Kraken OCR.
 * platform: win-64
 
 ## Installation
@@ -13,24 +13,27 @@ A simple Python project for comparing the output of keras_ocr, doctr_ocr, easyoc
 
 
 ## Usage
+
+Add your images you want to compare the outputs of to the "images" folder.
+
 To run the project, navigate to the project directory: ```cd ocr_model_quantifier```
 
 Then run the script:
 ```python main.py```
 
 
-* The script will compare the Keras_ocr, Doctr_ocr, Easyocr and Tesseract_ocr text predictions for each image in the "images" folder using Matplotlib. 
+* The script will compare the Keras OCR, Doctr OCR, Easyocr, Tesseract OCR and Kraken OCR text predictions for each image in the "images" folder using Matplotlib. 
 * The names of the images do not matter as long as they are in the "images" folder.
 * It will also track the individual runtime of each model per image in a file named "individual_runtime.csv". The average runtime of each model is written to a file named "average_runtime.txt".
 
 ## Example Image Comparisons
 
-![alt text](https://github.com/william-murray1204/ocr_model_quantifier/blob/main/github_example_images/example_1.PNG)
+![alt text](
 
-![alt text](https://github.com/william-murray1204/ocr_model_quantifier/blob/main/github_example_images/example_2.PNG)
+![alt text](
 
-![alt text](https://github.com/william-murray1204/ocr_model_quantifier/blob/main/github_example_images/example_3.PNG)
+![alt text](
 
-![alt text](https://github.com/william-murray1204/ocr_model_quantifier/blob/main/github_example_images/example_4.PNG)
+![alt text](
 
-![alt text](https://github.com/william-murray1204/ocr_model_quantifier/blob/main/github_example_images/example_5.PNG)
+![alt text](

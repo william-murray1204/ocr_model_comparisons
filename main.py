@@ -6,6 +6,12 @@ import pandas as pd
 import numpy as np
 import time
 import os
+import subprocess
+from lxml import etree
+import re
+
+os.environ['PYTHONIOENCODING'] = 'utf-8' 
+
 
 
 img_fns = glob('images/*')
@@ -49,7 +55,7 @@ for img in img_fns[:image_count]:
     tesseract_runtime_sum += runtime
 
     # Create a csv row for runtime
-    data = str(f'"{os.path.basename(img)}", "tesseract_ocr", {runtime}\n')
+    data = str(f'"{os.path.basename(img)}","tesseract_ocr",{runtime}\n')
     # Save the csv row to the file
     with open(individual_runtime_output_file, 'a') as f:
         f.write(data)
@@ -61,7 +67,7 @@ for img in img_fns[:image_count]:
             y1 = results["top"][i]
             x2 = x1 + results["width"][i]
             y2 = y1 + results["height"][i]
-            # Swap x and y coordinates, and invert y
+            # From the two diagonal coordinates given, convert into 4 (a box)
             box = flesh_out_coordinates([[x1, y1], [x2, y2]])
             img_df = pd.concat([
                     img_df, pd.DataFrame({
@@ -75,6 +81,89 @@ for img in img_fns[:image_count]:
     tesseract_test_count += 1
 
 tesseract_df = pd.concat(dfs) 
+
+
+# kraken_ocr
+dfs = []
+kraken_runtime_sum = 0
+kraken_test_count = 0
+for img in img_fns[:image_count]:
+    img_id = img.split('\\')[-1].split('.')[0] 
+    img_df = pd.DataFrame(columns=['text', 'bbox', 'img_id'])
+
+    # Start tracking runtime and run the model
+    start_time = time.time()
+    command = f'kraken -i "{img}" "image.xml" --hocr binarize segment ocr -m en_best.mlmodel'  # Run kraken OCR model and output hocr results to xml file
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+    output, error = process.communicate()
+    print(output.decode())  
+    end_time = time.time()
+    runtime = end_time - start_time
+    kraken_runtime_sum += runtime
+
+     # Create a csv row for runtime
+    data = str(f'"{os.path.basename(img)}","kraken_ocr",{runtime}\n')
+    # Save the csv row to the file
+    with open(individual_runtime_output_file, 'a') as f:
+        f.write(data)
+
+    # Parse the XML using lxml
+    root = etree.parse('image.xml')
+    # Use XPath to select all the ocr_line elements
+    lines = root.xpath('//span[@class="ocr_line"]')
+    # Loop over the lines and extract the words and bounding boxes
+    for line in lines:
+        words = []
+        boxes = []
+
+        # Use XPath to select all the ocrx_word elements within the line
+        word_elements = line.xpath('.//span[@class="ocrx_word"]')
+
+        # Loop over the word elements and extract the text and bbox attributes
+        for word_element in word_elements:
+            text = word_element.text
+            bbox_str = word_element.get('title')
+
+            # Remove the x_confs data from the bbox_str
+            bbox_parts = bbox_str.split(';')
+            bbox_parts = [part for part in bbox_parts if 'x_confs' not in part]
+            bbox_str = ';'.join(bbox_parts)
+
+            # Parse the bbox attribute
+            bbox = [int(x) for x in re.findall(r'\d+', bbox_str)]
+
+            words.append(text)
+            boxes.append(bbox)
+
+        # Add the line to the data object
+        for i in range(len(words)):
+            if words[i] == " ":
+                pass
+            else: 
+                # From the two diagonal coordinates given, convert into 4 (a box)
+                box = flesh_out_coordinates([[boxes[i][0], boxes[i][1]], [boxes[i][2], boxes[i][3]]])
+                img_df = pd.concat([
+                                    img_df, pd.DataFrame({
+                                        'text': words[i],
+                                        'bbox': [box],
+                                        'img_id': [img_id]
+                                    })
+                                ], ignore_index=True)
+
+        dfs.append(img_df)
+    kraken_test_count += 1
+    os.remove("image.xml")
+
+kraken_df = pd.concat(dfs) 
+
+
+# # convert dataframe to a string
+# df_str = kraken_df.to_string(index=False)
+
+# # write the string to a text file
+# with open('kraken.txt', 'w') as f:
+#     f.write(df_str)
+
 
 
 
@@ -96,7 +185,7 @@ for img in img_fns[:image_count]:
     easyocr_runtime_sum += runtime
 
     # Create a csv row for runtime
-    data = str(f'"{os.path.basename(img)}", "easyocr", {runtime}\n')
+    data = str(f'"{os.path.basename(img)}","easyocr",{runtime}\n')
     # Save the csv row to the file
     with open(individual_runtime_output_file, 'a') as f:
         f.write(data)
@@ -125,7 +214,7 @@ for img in img_fns[:image_count]:
     keras_runtime_sum += runtime
     
     # Create a csv row for runtime
-    data = str(f'"{os.path.basename(img)}", "keras_ocr", {runtime}\n')
+    data = str(f'"{os.path.basename(img)}","keras_ocr",{runtime}\n')
     # Save the csv row to the file
     with open(individual_runtime_output_file, 'a') as f:
         f.write(data)
@@ -137,6 +226,8 @@ for img in img_fns[:image_count]:
     dfs.append(img_df)
     keras_test_count += 1
 kerasocr_df = pd.concat(dfs)
+
+
 
 
 # doctr_ocr
@@ -168,17 +259,19 @@ for img in img_fns[:image_count]:
     start_time = time.time()
     results_array = DocumentFile.from_images(img)
     results = model(results_array)
+
     end_time = time.time()
     runtime = end_time - start_time
     doctr_runtime_sum += runtime
 
     # Create a csv row for runtime
-    data = str(f'"{os.path.basename(img)}", "doctr_ocr", {runtime}\n')
+    data = str(f'"{os.path.basename(img)}","doctr_ocr",{runtime}\n')
     # Save the csv row to the file
     with open(individual_runtime_output_file, 'a') as f:
         f.write(data)
 
     result_json = results.export()
+
     img_df = pd.DataFrame(columns=['text', 'bbox', 'img_id'])
     img_id = img.split('\\')[-1].split('.')[0] 
     dimensions = result_json['pages'][0]['dimensions']
@@ -202,10 +295,23 @@ doctrocr_df = pd.concat(dfs)
 
 
 
+# import json
+# # convert list to json string
+# df_json = doctrocr_df.to_json(orient='records')
+# json_object = json.loads(df_json)
+
+# # write json string to json file
+# with open('output.json', 'w') as file:
+#     json.dump(json_object, file, indent=4)
+
+
+
+
+
 import matplotlib.patches as patches
 
 # Plot Results: easyocr vs keras_ocr
-def plot_compare(img_fn, easyocr_df, kerasocr_df, doctrocr_df, tesseract_df):
+def plot_compare(img_fn, easyocr_df, kerasocr_df, doctrocr_df, tesseract_df, kraken_ocr):
     fig, axs = plt.subplots(2, 3)
     img_id = img_fn.split('\\')[-1].split('.')[0] 
 
@@ -252,6 +358,20 @@ def plot_compare(img_fn, easyocr_df, kerasocr_df, doctrocr_df, tesseract_df):
         axs[1, 0].add_patch(rect)
         axs[1, 0].text(bbox[0][0], bbox[1][1], text, fontsize=12, color='r', va='bottom', ha='left', bbox=dict(facecolor='white', edgecolor='none', pad=0.5), transform=axs[1,0].transData, clip_on=True)
 
+    kraken_results = kraken_df.query('img_id == @img_id')[['text','bbox']].values.tolist()
+    kraken_results = [(x[0], np.array(x[1])) for x in kraken_results]
+    axs[1,1].imshow(img)
+    axs[1,1].set_title('kraken_ocr results', fontsize=24, pad=15)
+    axs[1,1].set_xticks([])
+    axs[1,1].set_yticks([])
+    axs[1,1].set_frame_on(True)
+    for result in kraken_results:
+        text = result[0]
+        bbox = result[1]
+        rect = patches.Rectangle((bbox[0][0], bbox[0][1]), bbox[2][0] - bbox[0][0], bbox[2][1] - bbox[0][1], linewidth=1, edgecolor='r', facecolor='none')
+        axs[1, 1].add_patch(rect)
+        axs[1, 1].text(bbox[0][0], bbox[1][1], text, fontsize=12, color='r', va='bottom', ha='left', bbox=dict(facecolor='white', edgecolor='none', pad=0.5), transform=axs[1,1].transData, clip_on=True)
+
     tesseract_results = tesseract_df.query('img_id == @img_id')[['text','bbox']].values.tolist()
     tesseract_results = [(x[0], np.array(x[1])) for x in tesseract_results]
     axs[1,2].imshow(img)
@@ -272,7 +392,7 @@ def plot_compare(img_fn, easyocr_df, kerasocr_df, doctrocr_df, tesseract_df):
     axs[0,1].set_yticks([])
     axs[0,1].set_frame_on(True)
 
-    axs[1,1].axis('off')
+
 
     # Add padding using tight_layout
     plt.tight_layout()
@@ -285,13 +405,14 @@ doctr_ocr_runtime_average = doctr_runtime_sum / doctr_test_count
 keras_ocr_runtime_average = keras_runtime_sum / keras_test_count
 easyocr_ocr_runtime_average = easyocr_runtime_sum / easyocr_test_count
 tesseract_ocr_runtime_average = tesseract_runtime_sum / tesseract_test_count
+kraken_ocr_runtime_average = kraken_runtime_sum / kraken_test_count
 
 if image_count < 2:
     append = ''
 else:
     append = 's'
 
-accuracy_output = f"Running models against {image_count} image{append} found that:\nAverage Doctr_OCR runtime: {doctr_ocr_runtime_average} seconds\nAverage Easyocr_OCR runtime: {easyocr_ocr_runtime_average} seconds\nAverage keras_OCR runtime: {keras_ocr_runtime_average} seconds\nAverage Tesseract_OCR runtime: {tesseract_ocr_runtime_average} seconds"
+accuracy_output = f"Running models against {image_count} image{append} found that:\nAverage Doctr_OCR runtime: {doctr_ocr_runtime_average} seconds\nAverage Easyocr_OCR runtime: {easyocr_ocr_runtime_average} seconds\nAverage keras_OCR runtime: {keras_ocr_runtime_average} seconds\nAverage Tesseract_OCR runtime: {tesseract_ocr_runtime_average} seconds\nAverage Kraken_OCR runtime: {kraken_ocr_runtime_average} seconds"
 
 # Check if the output file exists and create it if it doesn't
 if not os.path.exists(average_runtime_output_file):
@@ -304,5 +425,5 @@ else:
 
 # Loop over results
 for img_fn in img_fns[:image_count]:
-    plot_compare(img_fn, easyocr_df, kerasocr_df, doctrocr_df, tesseract_df)
+    plot_compare(img_fn, easyocr_df, kerasocr_df, doctrocr_df, tesseract_df, kraken_df)
 
