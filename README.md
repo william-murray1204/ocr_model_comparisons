@@ -28,12 +28,12 @@ Then run the script:
 
 ## Example Image Comparisons
 
-![alt text](
+![alt text](https://github.com/william-murray1204/ocr_model_comparisons/blob/main/github_example_images/Figure_1.png)
 
-![alt text](
+![alt text](https://github.com/william-murray1204/ocr_model_comparisons/blob/main/github_example_images/Figure_2.png)
 
-![alt text](
+![alt text](https://github.com/william-murray1204/ocr_model_comparisons/blob/main/github_example_images/Figure_3.png)
 
-![alt text](
+![alt text](https://github.com/william-murray1204/ocr_model_comparisons/blob/main/github_example_images/Figure_4.png)
 
-![alt text](
+![alt text](https://github.com/william-murray1204/ocr_model_comparisons/blob/main/github_example_images/Figure_5.png)
