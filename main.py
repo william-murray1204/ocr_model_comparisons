@@ -15,8 +15,8 @@ os.environ['PYTHONIOENCODING'] = 'utf-8'
 
 
 img_fns = glob('images/*')
-image_count = len(img_fns)
-# image_count = 1
+# image_count = len(img_fns)
+image_count = 1
 individual_runtime_output_file = 'individual_runtime.csv'
 average_runtime_output_file = "average_runtime.txt"
 
